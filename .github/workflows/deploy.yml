@@ -39,7 +39,11 @@ jobs:
           key: v1
       - run: npm run generate gh-pages
       - run: npm install --no-save markdown-to-html-cli
-      - run: npx markdown-to-html --no-corners --output gh-pages/index.html
+      - run: |
+          npx markdown-to-html \
+            --markdown "$(sed 's#\(\[Subscribe\]\)(https:#\1(webcal:#g' < README.md)" \
+            --no-corners \
+            --output gh-pages/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: gh-pages
