@@ -87,12 +87,13 @@ async function fetchCinemas(window, token) {
     });
 
   const json = await response.json();
+  // await write("_cinemas.json", JSON.stringify(json, null, "\t"));
   return new Map(
     json["cinema_list"].map((x) => [
       x["cinema_id"],
       {
         id: x["cinema_id"],
-        name: json["cinemaloc"][x["cinema_id"]],
+        name: x["name"],
         slug: x["slug"].replace("-picturehouse", ""),
       },
     ]),
@@ -136,10 +137,7 @@ async function fetchShows(window, token, cinemaId) {
   const shows = [];
 
   const json = await response.json();
-
-  // (for debugging!)
   // await write("_shows.json", JSON.stringify(json, null, "\t"));
-
   for (const movie of json["movies"]) {
     for (const show of movie["show_times"]) {
       const title = movie["Title"];
@@ -165,6 +163,7 @@ async function fetchShows(window, token, cinemaId) {
         filmId,
         showId,
         cinemaId,
+        screenName,
         attributes,
       });
     }
@@ -217,8 +216,6 @@ async function main() {
     )
   );
 
-  await write("_shows", JSON.stringify(shows, null, "\t"));
-
   // Calendar feed per cinema
   const feeds = new Map(
     Array.from(cinemas, ([cinemaId, { name }]) => [cinemaId, ical({ name })]),
@@ -239,6 +236,7 @@ async function main() {
       screenName,
     }) => {
       feeds.get(cinemaId).createEvent({
+        id: showId,
         start,
         end,
         url,
@@ -252,7 +250,7 @@ async function main() {
           filmUrl,
           descriptions.get(filmId),
           attributes.join("\n"),
-        ].join("\n\n")
+        ].join("\n\n").trim()
       });
     },
   );
