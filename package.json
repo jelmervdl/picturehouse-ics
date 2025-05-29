@@ -1,15 +1,15 @@
 {
   "type": "module",
-  "name": "princecharlescinemacal",
+  "name": "picturehouse-ics",
   "version": "1.0.0",
-  "description": "Generate an iCal from the Prince Charles Cinema's What's On page",
+  "description": "Generate an iCal for all Picturehouse cinemas",
   "main": "index.js",
   "scripts": {
     "generate": "node ./index.js"
   },
   "repository": {
     "type": "git",
-    "url": "github.com/jelmervdl/pccical"
+    "url": "github.com/jelmervdl/picturehouse-ics.git"
   },
   "author": "Jelmer van der Linde",
   "license": "ISC",

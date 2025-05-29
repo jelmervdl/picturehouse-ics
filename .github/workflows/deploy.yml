@@ -41,6 +41,7 @@ jobs:
       - run: npm install --no-save markdown-to-html-cli
       - run: |
           npx markdown-to-html \
+            --title 'Picturehouse ical calendars' \
             --markdown "$(sed 's#\(\[Subscribe\]\)(https:#\1(webcal:#g' < README.md)" \
             --no-corners \
             --output gh-pages/index.html
