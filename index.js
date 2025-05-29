@@ -248,7 +248,6 @@ async function main() {
     ({
       title,
       start,
-      end,
       url,
       soldOut,
       filmUrl,
@@ -262,7 +261,7 @@ async function main() {
         id: showId,
         start,
         end: new Date(
-          start
+          start.getTime()
           + filmMeta.get(filmId).runtime * 1000
           + (attributes.includes("Ad and Trailer Free") ? 0 : 20 * 60 * 1000)
         ),
