@@ -1,0 +1,21 @@
+{
+  "type": "module",
+  "name": "princecharlescinemacal",
+  "version": "1.0.0",
+  "description": "Generate an iCal from the Prince Charles Cinema's What's On page",
+  "main": "index.js",
+  "scripts": {
+    "generate": "node ./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/jelmervdl/pccical"
+  },
+  "author": "Jelmer van der Linde",
+  "license": "ISC",
+  "dependencies": {
+    "happy-dom": "^15.11.7",
+    "ical-generator": "^8.0.1",
+    "slugify": "^1.6.6"
+  }
+}
