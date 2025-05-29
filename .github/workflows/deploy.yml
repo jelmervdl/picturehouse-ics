@@ -36,7 +36,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: cache
-          key: v1
+          key: v2
       - run: npm run generate gh-pages
       - run: npm install --no-save markdown-to-html-cli
       - run: |
