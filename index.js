@@ -217,6 +217,8 @@ async function main() {
     )
   );
 
+  await write("_shows", JSON.stringify(shows, null, "\t"));
+
   // Calendar feed per cinema
   const feeds = new Map(
     Array.from(cinemas, ([cinemaId, { name }]) => [cinemaId, ical({ name })]),
@@ -241,6 +243,9 @@ async function main() {
         end,
         url,
         summary: title,
+        location: {
+          title: cinemas.get(cinemaId).name,
+        },
         description: [
           ...(soldOut ? ["[sold out]"] : []),
           screenName,
