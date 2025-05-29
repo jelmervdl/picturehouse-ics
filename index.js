@@ -66,6 +66,15 @@ async function cached(key, fn) {
   }
 }
 
+function parseRuntime(runtime) {
+  try {
+    return parseInt(runtime) * 60;
+  } catch (err) {
+    console.error(`could not parse runtime '${runtime}'`);
+    return 90 * 60; // Assume 90 minutes because why not.
+  }
+}
+
 async function fetchCinemas(window, token) {
   const body = new FormData();
   body.append("_token", token);
@@ -106,9 +115,19 @@ async function fetchFilm(browser, filmUrl) {
   try {
     await page.goto(filmUrl);
     await page.waitUntilComplete();
-    return page.mainFrame.document.querySelector(
+    const description = page.mainFrame.document.querySelector(
       "section .synopsisDiv",
     ).innerText.trim();
+
+    // Failing to fetch runtime is not a big issue
+    // (and common for special screenings like the Opera live screenings)
+    let runtime = 0;
+    try {
+      runtime = parseRuntime(page.mainFrame.document.querySelector(".carousel-caption .movie_run").innerText.trim())
+    } catch (err) {
+      console.error(`Could not fetch runtime for ${filmUrl}: ${err}`);
+    }
+    return { description, runtime };
   } catch (error) {
     throw new Error(`Error fetching ${filmUrl}: ${error}`);
   } finally {
@@ -143,7 +162,6 @@ async function fetchShows(window, token, cinemaId) {
       const title = movie["Title"];
       const soldOut = !!show["SoldoutStatus"];
       const start = new Date(show["Showtime"]);
-      const end = new Date(start + 2 * 3600_000);
       const url = `https://web.picturehouses.com/order/showtimes/${show["CinemaId"]}-${show["SessionId"]}/seats`;
       const filmUrl = `https://www.picturehouses.com/movie-details/${show["CinemaId"]}/${movie["ScheduledFilmId"]}/${slugify(movie["Title"])}`;
       const filmId = movie["ScheduledFilmId"];
@@ -156,7 +174,6 @@ async function fetchShows(window, token, cinemaId) {
       shows.push({
         title,
         start,
-        end,
         url,
         soldOut,
         filmUrl,
@@ -197,7 +214,7 @@ async function main() {
   // descriptions for all films (using filmId as key to filter out duplicates
   // from multiple shows per film). Using semaphore to control concurrency.
   const withSemaphore = Semaphore(8);
-  const descriptions = new Map(
+  const filmMeta = new Map(
     await Promise.all(
       Array.from(films, async ([filmId, filmUrl]) => {
         try {
@@ -210,7 +227,13 @@ async function main() {
             })
           ];
         } catch (err) {
-          return [filmId, "[no description]"];
+          return [
+            filmId,
+            {
+              description: "[no description]",
+              runtime: 90 * 60
+            }
+          ];
         }
       })
     )
@@ -238,7 +261,11 @@ async function main() {
       feeds.get(cinemaId).createEvent({
         id: showId,
         start,
-        end,
+        end: new Date(
+          start
+          + filmMeta.get(filmId).runtime * 1000
+          + (attributes.includes("Ad and Trailer Free") ? 0 : 20 * 60 * 1000)
+        ),
         url,
         summary: title,
         location: {
@@ -248,7 +275,7 @@ async function main() {
           ...(soldOut ? ["[sold out]"] : []),
           screenName,
           filmUrl,
-          descriptions.get(filmId),
+          filmMeta.get(filmId).description,
           attributes.join("\n"),
         ].join("\n\n").trim()
       });
