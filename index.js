@@ -246,8 +246,8 @@ async function main() {
           screenName,
           filmUrl,
           descriptions.get(filmId),
-          ...attributes,
-        ].join("\n")
+          attributes.join("\n"),
+        ].join("\n\n")
       });
     },
   );
