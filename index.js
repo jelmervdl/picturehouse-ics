@@ -1,9 +1,13 @@
 import { Browser, FormData } from "happy-dom";
+import { TZDate } from "@date-fns/tz";
+import { addSeconds } from "date-fns";
 import ical from "ical-generator";
 import fs from "node:fs";
 import slugify from "slugify";
 
 const CACHE_DIR = "cache"
+
+const timezone = "Europe/London";
 
 function Semaphore(value) {
   let running = 0;
@@ -161,7 +165,7 @@ async function fetchShows(window, token, cinemaId) {
     for (const show of movie["show_times"]) {
       const title = movie["Title"];
       const soldOut = !!show["SoldoutStatus"];
-      const start = new Date(show["Showtime"]);
+      const start = new TZDate(show["Showtime"], timezone);
       const url = `https://web.picturehouses.com/order/showtimes/${show["CinemaId"]}-${show["SessionId"]}/seats`;
       const filmUrl = `https://www.picturehouses.com/movie-details/${show["CinemaId"]}/${movie["ScheduledFilmId"]}/${slugify(movie["Title"])}`;
       const filmId = movie["ScheduledFilmId"];
@@ -260,11 +264,12 @@ async function main() {
       feeds.get(cinemaId).createEvent({
         id: showId,
         start,
-        end: new Date(
-          start.getTime()
-          + filmMeta.get(filmId).runtime * 1000
-          + (attributes.includes("Ad and Trailer Free") ? 0 : 20 * 60 * 1000)
+        end: addSeconds(
+          start,
+          filmMeta.get(filmId).runtime
+          + (attributes.includes("Ad and Trailer Free") ? 0 : 20 * 60)
         ),
+        timezone,
         url,
         summary: title,
         location: {
