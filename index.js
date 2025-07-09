@@ -71,12 +71,12 @@ async function cached(key, fn) {
 }
 
 function parseRuntime(runtime) {
-  try {
-    return parseInt(runtime) * 60;
-  } catch (err) {
+  let minutes = parseInt(runtime);
+  if (isNaN(minutes)) {
     console.error(`could not parse runtime '${runtime}'`);
-    return 90 * 60; // Assume 90 minutes because why not.
+    minutes = 90;  // Assume 90 minutes because why not.
   }
+  return minutes * 60;
 }
 
 async function fetchCinemas(window, token) {
@@ -261,28 +261,32 @@ async function main() {
       attributes,
       screenName,
     }) => {
-      feeds.get(cinemaId).createEvent({
-        id: showId,
-        start,
-        end: addSeconds(
+      try {
+        feeds.get(cinemaId).createEvent({
+          id: showId,
           start,
-          filmMeta.get(filmId).runtime
-          + (attributes.includes("Ad and Trailer Free") ? 0 : 20 * 60)
-        ),
-        timezone,
-        url,
-        summary: title,
-        location: {
-          title: cinemas.get(cinemaId).name,
-        },
-        description: [
-          ...(soldOut ? ["[sold out]"] : []),
-          screenName,
-          filmUrl,
-          filmMeta.get(filmId).description,
-          attributes.join("\n"),
-        ].join("\n\n").trim()
-      });
+          end: addSeconds(
+            start,
+            filmMeta.get(filmId).runtime
+            + (attributes.includes("Ad and Trailer Free") ? 0 : 20 * 60)
+          ),
+          timezone,
+          url,
+          summary: title,
+          location: {
+            title: cinemas.get(cinemaId).name,
+          },
+          description: [
+            ...(soldOut ? ["[sold out]"] : []),
+            screenName,
+            filmUrl,
+            filmMeta.get(filmId).description,
+            attributes.join("\n"),
+          ].join("\n\n").trim()
+        });
+      } catch (error) {
+        console.error({error, title, url, start, runtime: filmMeta.get(filmId).runtime });
+      }
     },
   );
 
